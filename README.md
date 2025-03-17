@@ -11,9 +11,12 @@ For now, this adventure is exploratory, the scope is vague (should it be expande
 [Install node.js](https://nodejs.org/en)
 
 then run this command in command-line (replace `@davidbruant@eldritch.cafe` with the Mastodon account you want to download images+alt-texts from)
+
+**Create token on Mastodon**
+
 ```sh
 # cd to directory where you want to backup to
-npx https://github.com/DavidBruant/quick-masto-image-backup @davidbruant@eldritch.cafe
+TOKEN={Token} npx https://github.com/DavidBruant/quick-masto-image-backup @davidbruant@eldritch.cafe
 ```
 
 This creates:

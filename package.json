@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/DavidBruant/quick-masto-image-backup#readme",
   "dependencies": {
+    "masto": "^6.10.3",
     "minimist": "^1.2.8"
   },
   "devDependencies": {
