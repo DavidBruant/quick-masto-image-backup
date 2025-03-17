@@ -1,0 +1,28 @@
+{
+  "name": "quick-masto-image-backup",
+  "version": "1.0.0",
+  "description": "A utility to quickly backup images and alt-text from a given Mastodon account",
+  "type": "module",
+  "bin": "index.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DavidBruant/quick-masto-image-backup.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "CC0-1.0",
+  "bugs": {
+    "url": "https://github.com/DavidBruant/quick-masto-image-backup/issues"
+  },
+  "homepage": "https://github.com/DavidBruant/quick-masto-image-backup#readme",
+  "dependencies": {
+    "minimist": "^1.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10"
+  }
+}
