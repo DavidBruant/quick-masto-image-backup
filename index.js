@@ -1,13 +1,11 @@
 import {join, extname} from 'node:path';
 import {mkdir} from 'node:fs/promises'
 import {createWriteStream} from 'node:fs'
-
 import https from 'node:https'
-
 
 import minimist from 'minimist'
 import { createRestAPIClient } from 'masto';
-
+import { stringify } from 'csv-stringify';
 
 const accessToken = process.env.TOKEN
 if(!accessToken){
@@ -74,7 +72,19 @@ function downloadImage(url, filepath){
 
 const statusPaginator = masto.v1.accounts.$select(accountId).statuses.list({limit: 40, onlyMedia: true})
 
-let imagePathToAltText = new Map()
+
+const csvFilename = 'images.csv'
+const csvPath = join(backupDirPath, csvFilename)
+
+const csvFileStream = createWriteStream(csvPath)
+
+const csvStringifier = stringify({
+    delimiter: ',',
+    objectMode: true,
+    columns: ['image_path', 'alt']
+});
+
+csvStringifier.pipe(csvFileStream)
 
 for await (const page of statusPaginator){
     //console.log('page', page.length, page[0].id)
@@ -89,11 +99,15 @@ for await (const page of statusPaginator){
             if(type === 'image' && url){
                 const extension = extname(url)
                 const filename = `${id}${extension}`
-                //console.log('filename', filename, url)
-                imagePathToAltText.set(`${IMAGES_SUBDIR_NAME}/${filename}`, description)
 
                 const pathname = join(backupImagesDirPath, filename)
+
                 await downloadImage(url, pathname)
+
+                csvStringifier.write({
+                    image_path: `${IMAGES_SUBDIR_NAME}/${filename}`,
+                    alt: description
+                })
             }
             else{
                 // ignore
@@ -101,5 +115,6 @@ for await (const page of statusPaginator){
         }
     }
 
-    
 }
+
+csvStringifier.end()
