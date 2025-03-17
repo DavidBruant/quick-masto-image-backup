@@ -27,8 +27,12 @@ const accountId = account.id;
 
 console.log('accountName', accountName, accountId)
 
-const statusPaginator = masto.v1.accounts.$select(accountId).statuses.list()
+const statusPaginator = masto.v1.accounts.$select(accountId).statuses.list({limit: 40, onlyMedia: true})
 
 const page = await statusPaginator.values()
 
-console.log('page', page)
+const simplifiedPage = page.map(({id, createdAt, content, mediaAttachments, language}) => ({id, createdAt, content, mediaAttachments, language}))
+
+console.log('simplifiedPage', simplifiedPage, simplifiedPage.length)
+
+console.log('medias', simplifiedPage.map(p => p.mediaAttachments))
