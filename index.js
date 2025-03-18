@@ -121,7 +121,7 @@ for await (const page of statusPaginator){
 
                 const pathname = join(backupImagesDirPath, filename)
 
-                promiseWindow(() => downloadImage(url, pathname)
+                const downloadedP = promiseWindow(() => downloadImage(url, pathname)
                     .then(() => {
                         csvStringifier.write({
                             image_path: `${IMAGES_SUBDIR_NAME}/${filename}`,
@@ -129,6 +129,8 @@ for await (const page of statusPaginator){
                         })
                     })
                 )
+
+                downloadedFilePs.push(downloadedP)
             }
             else{
                 // ignore
@@ -138,4 +140,6 @@ for await (const page of statusPaginator){
 
 }
 
-csvStringifier.end()
+Promise.allSettled(downloadedFilePs)
+    .then(() => csvStringifier.end())
+
