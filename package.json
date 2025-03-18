@@ -23,7 +23,8 @@
     "csv-stringify": "^6.5.2",
     "dotenv": "^16.4.7",
     "masto": "^6.10.3",
-    "minimist": "^1.2.8"
+    "minimist": "^1.2.8",
+    "p-limit": "^6.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.13.10"

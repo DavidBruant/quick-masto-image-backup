@@ -1,14 +1,18 @@
 #!/usr/bin/env node 
 
-import {join, extname} from 'node:path';
+import {join, extname} from 'node:path'
 import {mkdir} from 'node:fs/promises'
 import {createWriteStream} from 'node:fs'
 import https from 'node:https'
 
 import minimist from 'minimist'
-import { createRestAPIClient } from 'masto';
-import { stringify } from 'csv-stringify';
 import dotenv from 'dotenv'
+import { stringify } from 'csv-stringify'
+import pLimit from 'p-limit';
+import { createRestAPIClient } from 'masto'
+
+// for parallel downloads
+const promiseWindow = pLimit(8);
 
 dotenv.config()
 
@@ -98,6 +102,8 @@ const csvStringifier = stringify({
 
 csvStringifier.pipe(csvFileStream)
 
+const downloadedFilePs = []
+
 for await (const page of statusPaginator){
     //console.log('page', page.length, page[0].id)
 
@@ -114,12 +120,14 @@ for await (const page of statusPaginator){
 
                 const pathname = join(backupImagesDirPath, filename)
 
-                await downloadImage(url, pathname)
-
-                csvStringifier.write({
-                    image_path: `${IMAGES_SUBDIR_NAME}/${filename}`,
-                    alt: description
-                })
+                promiseWindow(() => downloadImage(url, pathname)
+                    .then(() => {
+                        csvStringifier.write({
+                            image_path: `${IMAGES_SUBDIR_NAME}/${filename}`,
+                            alt: description
+                        })
+                    })
+                )
             }
             else{
                 // ignore
