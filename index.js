@@ -69,7 +69,7 @@ catch(e){
 }
 
 function downloadImage(url, filepath){
-    console.log('download', url, 'to', filepath)
+    //console.log('download', url, 'to', filepath)
 
     return new Promise((resolve, reject) => {
         const fileWriteStream = createWriteStream(filepath)
@@ -105,6 +105,8 @@ csvStringifier.pipe(csvFileStream)
 
 const downloadedFilePs = []
 
+let doneCount = 0
+
 for await (const page of statusPaginator){
     //console.log('page', page.length, page[0].id)
 
@@ -127,6 +129,11 @@ for await (const page of statusPaginator){
                             image_path: `${IMAGES_SUBDIR_NAME}/${filename}`,
                             alt: description
                         })
+
+                        doneCount++
+                        if(doneCount % 10 === 0){
+                            console.info(doneCount, `downloaded images and alt-texts so far...`)
+                        }
                     })
                 )
 
@@ -142,4 +149,5 @@ for await (const page of statusPaginator){
 
 Promise.allSettled(downloadedFilePs)
     .then(() => csvStringifier.end())
+    .then(() => {console.info(`🎉 All done ! Downloaded`, doneCount, `images and alt-texts`)})
 
