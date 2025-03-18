@@ -1,6 +1,6 @@
 {
   "name": "quick-masto-image-backup",
-  "version": "0.1",
+  "version": "0.0.1",
   "description": "A utility to quickly backup images and alt-text from a given Mastodon account",
   "type": "module",
   "bin": "index.js",
