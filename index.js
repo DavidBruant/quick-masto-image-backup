@@ -1,11 +1,20 @@
-import {join, extname} from 'node:path';
+#!/usr/bin/env node 
+
+import {join, extname} from 'node:path'
 import {mkdir} from 'node:fs/promises'
 import {createWriteStream} from 'node:fs'
 import https from 'node:https'
 
 import minimist from 'minimist'
-import { createRestAPIClient } from 'masto';
-import { stringify } from 'csv-stringify';
+import dotenv from 'dotenv'
+import { stringify } from 'csv-stringify'
+import pLimit from 'p-limit';
+import { createRestAPIClient } from 'masto'
+
+// for parallel downloads
+const promiseWindow = pLimit(8);
+
+dotenv.config()
 
 const accessToken = process.env.TOKEN
 if(!accessToken){
@@ -14,12 +23,15 @@ if(!accessToken){
 
 
 const argv = minimist(process.argv.slice(2));
-console.log(argv);
 
 const mastoAccount = argv['_'][0]
 
 const pieces = mastoAccount.match(/^@(.*)@(.*)$/)
 //console.log('pieces', pieces)
+
+if(!pieces){
+    throw new Error(`Unexpected account format (${mastoAccount}). Expected format: '@compte@instance'`)
+}
 
 const [_, accountName, accountHostname] = pieces
 
@@ -29,9 +41,13 @@ const masto = await createRestAPIClient({
 });
 
 const account = await masto.v1.accounts.lookup({ acct: accountName });
-const accountId = account.id;
+const accountId = account && account.id;
 
-console.log('accountName', accountName, accountId)
+if(!accountId){
+    throw new Error(`Could not find account ${accountName} on instance ${accountHostname}`)
+}
+
+console.info('Account', accountName, `found on instance`, accountHostname,`(id: ${accountId})`)
 
 const IMAGES_SUBDIR_NAME = 'images'
 
@@ -53,7 +69,7 @@ catch(e){
 }
 
 function downloadImage(url, filepath){
-    console.log('download', url, 'to', filepath)
+    //console.log('download', url, 'to', filepath)
 
     return new Promise((resolve, reject) => {
         const fileWriteStream = createWriteStream(filepath)
@@ -65,6 +81,7 @@ function downloadImage(url, filepath){
         })
         
         fileWriteStream.on('error', reject)
+        // @ts-ignore
         fileWriteStream.on('finish', resolve)
     })
 }
@@ -86,6 +103,10 @@ const csvStringifier = stringify({
 
 csvStringifier.pipe(csvFileStream)
 
+const downloadedFilePs = []
+
+let doneCount = 0
+
 for await (const page of statusPaginator){
     //console.log('page', page.length, page[0].id)
 
@@ -102,12 +123,21 @@ for await (const page of statusPaginator){
 
                 const pathname = join(backupImagesDirPath, filename)
 
-                await downloadImage(url, pathname)
+                const downloadedP = promiseWindow(() => downloadImage(url, pathname)
+                    .then(() => {
+                        csvStringifier.write({
+                            image_path: `${IMAGES_SUBDIR_NAME}/${filename}`,
+                            alt: description
+                        })
 
-                csvStringifier.write({
-                    image_path: `${IMAGES_SUBDIR_NAME}/${filename}`,
-                    alt: description
-                })
+                        doneCount++
+                        if(doneCount % 10 === 0){
+                            console.info(doneCount, `downloaded images and alt-texts so far...`)
+                        }
+                    })
+                )
+
+                downloadedFilePs.push(downloadedP)
             }
             else{
                 // ignore
@@ -117,4 +147,7 @@ for await (const page of statusPaginator){
 
 }
 
-csvStringifier.end()
+Promise.allSettled(downloadedFilePs)
+    .then(() => csvStringifier.end())
+    .then(() => {console.info(`🎉 All done ! Downloaded`, doneCount, `images and alt-texts`)})
+
