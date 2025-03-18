@@ -21,6 +21,7 @@
   "homepage": "https://github.com/DavidBruant/quick-masto-image-backup#readme",
   "dependencies": {
     "csv-stringify": "^6.5.2",
+    "dotenv": "^16.4.7",
     "masto": "^6.10.3",
     "minimist": "^1.2.8"
   },

@@ -1,3 +1,5 @@
+#!/usr/bin/env node 
+
 import {join, extname} from 'node:path';
 import {mkdir} from 'node:fs/promises'
 import {createWriteStream} from 'node:fs'
@@ -6,6 +8,9 @@ import https from 'node:https'
 import minimist from 'minimist'
 import { createRestAPIClient } from 'masto';
 import { stringify } from 'csv-stringify';
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 const accessToken = process.env.TOKEN
 if(!accessToken){
@@ -14,12 +19,15 @@ if(!accessToken){
 
 
 const argv = minimist(process.argv.slice(2));
-console.log(argv);
 
 const mastoAccount = argv['_'][0]
 
 const pieces = mastoAccount.match(/^@(.*)@(.*)$/)
 //console.log('pieces', pieces)
+
+if(!pieces){
+    throw new Error(`Unexpected account format (${mastoAccount}). Expected format: '@compte@instance'`)
+}
 
 const [_, accountName, accountHostname] = pieces
 
@@ -29,9 +37,13 @@ const masto = await createRestAPIClient({
 });
 
 const account = await masto.v1.accounts.lookup({ acct: accountName });
-const accountId = account.id;
+const accountId = account && account.id;
 
-console.log('accountName', accountName, accountId)
+if(!accountId){
+    throw new Error(`Could not find account ${accountName} on instance ${accountHostname}`)
+}
+
+console.info('Account', accountName, `found on instance`, `(id: ${accountId}`)
 
 const IMAGES_SUBDIR_NAME = 'images'
 
