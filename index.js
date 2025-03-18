@@ -47,7 +47,7 @@ if(!accountId){
     throw new Error(`Could not find account ${accountName} on instance ${accountHostname}`)
 }
 
-console.info('Account', accountName, `found on instance`, `(id: ${accountId}`)
+console.info('Account', accountName, `found on instance`, accountHostname,`(id: ${accountId})`)
 
 const IMAGES_SUBDIR_NAME = 'images'
 
@@ -81,6 +81,7 @@ function downloadImage(url, filepath){
         })
         
         fileWriteStream.on('error', reject)
+        // @ts-ignore
         fileWriteStream.on('finish', resolve)
     })
 }

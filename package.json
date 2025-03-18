@@ -5,6 +5,9 @@
   "type": "module",
   "bin": "index.js",
   "main": "index.js",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
